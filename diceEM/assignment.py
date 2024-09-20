@@ -60,9 +60,13 @@ def diceEM(experiment_data: List[NDArray[np.int_]],  # pylint: disable=C0103
                       bag_of_dice.likelihood(experiment_data))
 
         # YOUR CODE HERE. SET REQUIRED VARIABLES BY CALLING e-step AND m-step.
-        # E-step: compute the expected counts given current parameters        
+        # E-step: compute the expected counts given current parameters 
+        expected_counts = e_step(experiment_data=experiment_data, bag_of_dice=bag_of_dice)
+        
   
         # M-step: update the parameters given the expected counts
+        updated_bag_of_dice = m_step(expected_counts)
+
       
         prev_bag_of_dice: BagOfDice = bag_of_dice
         bag_of_dice = updated_bag_of_dice
@@ -109,6 +113,14 @@ def e_step(experiment_data: List[NDArray[np.int_]],
 
     # PUT YOUR CODE HERE, FOLLOWING THE DIRECTIONS ABOVE
 
+    for i in range(len(experiment_data)) : # Iterate over draws.
+        post_1 = dice_posterior(experiment_data[i], bag_of_dice) # For each draw, calculate the the posterior probability that each die type was rolled on that draw by calling dice_posterior.
+        post_2 = 1 - post_1
+        # Then combine the posterior for each die type with the observed counts for 
+        # the current draw to get the expected counts for each die type on this draw.
+        expected_counts[0] = (experiment_data[i] * post_1) + expected_counts[0]
+        expected_counts[1] = (experiment_data[i] * post_2) + expected_counts[1]
+
     return expected_counts
 
 
@@ -135,9 +147,9 @@ def m_step(expected_counts_by_die: NDArray[np.float_]):
     updated_type_2_frequency = np.sum(expected_counts_by_die[1])
 
     # REPLACE EACH NONE BELOW WITH YOUR CODE. 
-    updated_priors = None
-    updated_type_1_face_probs = None
-    updated_type_2_face_probs = None
+    updated_priors = [updated_type_1_frequency / (updated_type_1_frequency + updated_type_2_frequency), updated_type_2_frequency / (updated_type_1_frequency + updated_type_2_frequency)]
+    updated_type_1_face_probs = expected_counts_by_die[0]/sum(expected_counts_by_die[0])
+    updated_type_2_face_probs = expected_counts_by_die[1]/sum(expected_counts_by_die[1])
     
     updated_bag_of_dice = BagOfDice(updated_priors,
                                     [Die(updated_type_1_face_probs),
